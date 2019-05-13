@@ -1,5 +1,5 @@
 <!--
-   Copyright 2018 Google LLC
+   Copyright 2018 Google LLC.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,23 +17,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AugmentedImageActivity">
+    tools:context="nl.hr.projectd.escapeassistant.MainActivity">
 
-
-    <fragment android:name="com.google.ar.sceneform.samples.augmentedimage.AugmentedImageFragment"
-        android:id="@+id/ux_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-
-  <ImageView
-      android:id="@+id/image_view_fit_to_scan"
+  <fragment android:name="com.google.ar.sceneform.ux.ArFragment"
+      android:id="@+id/ux_fragment"
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:layout_gravity="center"
-      android:scaleType="fitCenter"
-      android:src="@drawable/fit_to_scan"
-      android:contentDescription="@string/fit_image_to_scan"
-      />
+      android:layout_height="match_parent" />
 
 </FrameLayout>
