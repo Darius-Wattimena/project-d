@@ -27,9 +27,15 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.widget.Toast;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.Camera;
+import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
@@ -42,8 +48,10 @@ public class MainActivity extends AppCompatActivity {
   private static final String TAG = MainActivity.class.getSimpleName();
   private static final double MIN_OPENGL_VERSION = 3.0;
 
+  private int temp_nodes_to_place = 5; // ALLEEN OM PIJLEN TE TESTEN
+
   private ArFragment arFragment;
-  private ModelRenderable andyRenderable;
+  private ModelRenderable andyRenderable, arrowRenderable;
 
   @Override
   @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
@@ -74,6 +82,20 @@ public class MainActivity extends AppCompatActivity {
               return null;
             });
 
+     // Load arrow model
+      ModelRenderable.builder()
+              .setSource(this, R.raw.arrow)
+              .build()
+              .thenAccept(renderable -> arrowRenderable = renderable)
+              .exceptionally(
+                      throwable -> {
+                          Toast toast =
+                                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+                          toast.setGravity(Gravity.CENTER, 0, 0);
+                          toast.show();
+                          return null;
+                      });
+
     arFragment.setOnTapArPlaneListener(
         (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
           if (andyRenderable == null) {
@@ -91,6 +113,55 @@ public class MainActivity extends AppCompatActivity {
           andy.setRenderable(andyRenderable);
           andy.select();
         });
+
+    arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
+        arFragment.onUpdate(frameTime);
+        onUpdate();
+    });
+  }
+
+  protected void onUpdate() {
+      Frame frame = arFragment.getArSceneView().getArFrame();
+      Camera cam = frame.getCamera();
+
+      switch(cam.getTrackingState()) {
+          case TRACKING:
+          {
+              Pose camPose = cam.getDisplayOrientedPose(); // ?
+
+              if (temp_nodes_to_place > 0) {
+                  AnchorNode anchorNode = new AnchorNode();
+                  anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+                  // Set position relative to camera for now (0,0,0) is the center point of the camera
+                  anchorNode.setWorldPosition(new Vector3(0,-1.5f, -temp_nodes_to_place));
+
+                  // Create arrow node
+                  Node arrow = new Node();
+
+                  // Increase size
+                  arrow.setLocalScale(new Vector3(2.5f,2.5f,2.5f));
+
+                  // Rotate to point forwards
+                  arrow.setLocalRotation(
+                          Quaternion.multiply(
+                                  Quaternion.axisAngle(new Vector3(1, 0f, 0), 90),
+                                  Quaternion.axisAngle(new Vector3(0,0,1), 180))
+                  );
+
+                  // Add renderable (arrow model)
+                  arrow.setRenderable(arrowRenderable);
+
+                  // Add arrow to the anchor to keep it in place
+                  arrow.setParent(anchorNode);
+
+                  --temp_nodes_to_place;
+
+                  Log.d(TAG, "Placed an arrow");
+              }
+
+          }
+      }
   }
 
   /**
