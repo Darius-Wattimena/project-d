@@ -34,7 +34,6 @@ import com.google.ar.core.Plane;
 import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
-import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
@@ -137,17 +136,7 @@ public class MainActivity extends AppCompatActivity {
                   anchorNode.setWorldPosition(new Vector3(0,-1.5f, -temp_nodes_to_place));
 
                   // Create arrow node
-                  Node arrow = new Node();
-
-                  // Increase size
-                  arrow.setLocalScale(new Vector3(2.5f,2.5f,2.5f));
-
-                  // Rotate to point forwards
-                  arrow.setLocalRotation(
-                          Quaternion.multiply(
-                                  Quaternion.axisAngle(new Vector3(1, 0f, 0), 90),
-                                  Quaternion.axisAngle(new Vector3(0,0,1), 180))
-                  );
+                  Node arrow = new ArrowNode(Direction.NORTH);
 
                   // Add renderable (arrow model)
                   arrow.setRenderable(arrowRenderable);
