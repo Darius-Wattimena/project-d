@@ -40,6 +40,11 @@ import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
  */
@@ -47,7 +52,13 @@ public class MainActivity extends AppCompatActivity {
   private static final String TAG = MainActivity.class.getSimpleName();
   private static final double MIN_OPENGL_VERSION = 3.0;
 
-  private int temp_nodes_to_place = 5; // ALLEEN OM PIJLEN TE TESTEN
+  private int temp_nodes_to_place = 0; // ALLEEN OM PIJLEN TE TESTEN
+
+    private Boolean placeArrows = true;
+    private Boolean placedArrows = false;
+    private int startX = 0, startY = 0;
+
+  private ArrayList<Tile> arrowTiles = new ArrayList<>();
 
   private ArFragment arFragment;
   private ModelRenderable andyRenderable, arrowRenderable;
@@ -119,6 +130,53 @@ public class MainActivity extends AppCompatActivity {
     });
   }
 
+  public void loadMap() throws IOException {
+      BufferedReader reader = null;
+
+      reader = new BufferedReader(new InputStreamReader(getAssets().open("map.csv")));
+
+      String line;
+      String[] lineSplit;
+
+      int y = 0;
+
+      // For the users' start position
+      int endX = 0, endY = 0;
+
+      while ((line = reader.readLine()) != null) {
+          lineSplit = line.split(",");
+
+          for(int x=0; x<lineSplit.length; ++x) {
+              switch(lineSplit[x]) {
+                  case MapSymbols.START: {
+                      startX = x;
+                      startY = y;
+                  } break;
+
+                  case MapSymbols.NORTH:
+                  case MapSymbols.EAST:
+                  case MapSymbols.SOUTH:
+                  case MapSymbols.WEST: {
+                    arrowTiles.add(new Tile(x,y,lineSplit[x]));
+                  } break;
+
+                  case MapSymbols.END: {
+                      endX = x;
+                      endY = y;
+                  } break;
+              }
+          }
+
+          y+=1;
+      }
+
+      placeArrows = true;
+
+      Log.d(TAG, "READY TO PLACE ARROWS");
+
+      reader.close();
+  }
+
   protected void onUpdate() {
       Frame frame = arFragment.getArSceneView().getArFrame();
       Camera cam = frame.getCamera();
@@ -128,29 +186,56 @@ public class MainActivity extends AppCompatActivity {
           {
               Pose camPose = cam.getDisplayOrientedPose(); // ?
 
-              if (temp_nodes_to_place > 0) {
-                  AnchorNode anchorNode = new AnchorNode();
-                  anchorNode.setParent(arFragment.getArSceneView().getScene());
+              if (placeArrows) {
 
-                  // Set position relative to camera for now (0,0,0) is the center point of the camera
-                  anchorNode.setWorldPosition(new Vector3(0,-1.5f, -temp_nodes_to_place));
+                  ArrayList<Tile> mapTiles = null;
 
-                  // Create arrow node
-                  Node arrow = new ArrowNode(Direction.NORTH);
+                  try {
+                      // Load the map
+                      mapTiles = Map.generate(this, "map.csv");
+                  } catch (IOException e) {
+                      e.printStackTrace();
+                  }
 
-                  // Add renderable (arrow model)
-                  arrow.setRenderable(arrowRenderable);
+                  if (mapTiles == null) {
+                      Log.e(TAG, "onUpdate: Could not load map");
+                  }
 
-                  // Add arrow to the anchor to keep it in place
-                  arrow.setParent(anchorNode);
+                  for (Tile t : mapTiles) {
 
-                  --temp_nodes_to_place;
+                      if (t.symbol.equals(MapSymbols.END)) {
+                          // TODO: End tile, do something
+                      }
+                      else {
+                          // Place Arrow
+                          placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                      }
+                  }
 
-                  Log.d(TAG, "Placed an arrow");
+                  placeArrows = false;
               }
-
           }
       }
+  }
+
+  private void placeArrowNode(int x, int y, Direction direction) {
+      AnchorNode anchorNode = new AnchorNode();
+      anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+      // TODO: Determine actual floor level (set to 1.5m for testing purposes)
+      final float floorLevel = -1.5f;
+
+      // Set position relative to camera for now (0,0,0) is the center point of the camera
+      anchorNode.setWorldPosition(new Vector3(x, floorLevel, y));
+
+      // Create arrow node
+      Node arrow = new ArrowNode(direction);
+
+      // Add renderable (arrow model)
+      arrow.setRenderable(arrowRenderable);
+
+      // Add arrow to the anchor to keep it in place
+      arrow.setParent(anchorNode);
   }
 
   /**

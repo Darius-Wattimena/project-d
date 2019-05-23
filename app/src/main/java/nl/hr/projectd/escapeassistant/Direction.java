@@ -39,4 +39,18 @@ public enum Direction {
     };
 
     public abstract int getDegrees();
+
+    public static Direction fromMapSymbol(String symbol) {
+        switch (symbol) {
+            case MapSymbols.NORTH: return Direction.NORTH;
+            case MapSymbols.EAST: return Direction.EAST;
+            case MapSymbols.SOUTH: return Direction.SOUTH;
+            case MapSymbols.WEST: return Direction.WEST;
+            case MapSymbols.NORTHEAST: return Direction.NORTHEAST;
+            case MapSymbols.NORTHWEST: return Direction.NORTHWEST;
+            case MapSymbols.SOUTHEAST: return Direction.SOUTHEAST;
+            case MapSymbols.SOUTHWEST: return Direction.SOUTHWEST;
+            default: return Direction.NORTH;
+        }
+    }
 }
