@@ -31,15 +31,24 @@ import android.widget.Toast;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.Camera;
+import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 
@@ -50,8 +59,16 @@ public class MainActivity extends AppCompatActivity {
   private static final String TAG = MainActivity.class.getSimpleName();
   private static final double MIN_OPENGL_VERSION = 3.0;
 
+  private int temp_nodes_to_place = 0; // ALLEEN OM PIJLEN TE TESTEN
+
+    private Boolean placeArrows = true;
+    private Boolean placedArrows = false;
+    private int startX = 0, startY = 0;
+
+  private ArrayList<Tile> arrowTiles = new ArrayList<>();
+
   private ArFragment arFragment;
-  private ModelRenderable andyRenderable;
+  private ModelRenderable andyRenderable, arrowRenderable;
   private Button pythonButton;
   private Python py;
 
@@ -88,6 +105,20 @@ public class MainActivity extends AppCompatActivity {
               return null;
             });
 
+     // Load arrow model
+      ModelRenderable.builder()
+              .setSource(this, R.raw.arrow)
+              .build()
+              .thenAccept(renderable -> arrowRenderable = renderable)
+              .exceptionally(
+                      throwable -> {
+                          Toast toast =
+                                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+                          toast.setGravity(Gravity.CENTER, 0, 0);
+                          toast.show();
+                          return null;
+                      });
+
     arFragment.setOnTapArPlaneListener(
         (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
           if (andyRenderable == null) {
@@ -110,12 +141,125 @@ public class MainActivity extends AppCompatActivity {
         //TODO roep de python activity aan
         File testDirectory = FileUtil.getStorageDir("test", this);
         py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
-        String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
+        //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
         Log.d("EA", "---------------------------------------");
         Log.d("EA", "Python test");
-        Log.d("EA", result);
+        //Log.d("EA", result);
         Log.d("EA", "---------------------------------------");
     });
+
+    arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
+        arFragment.onUpdate(frameTime);
+        onUpdate();
+    });
+  }
+
+  public void loadMap() throws IOException {
+      BufferedReader reader = null;
+
+      reader = new BufferedReader(new InputStreamReader(getAssets().open("map.csv")));
+
+      String line;
+      String[] lineSplit;
+
+      int y = 0;
+
+      // For the users' start position
+      int endX = 0, endY = 0;
+
+      while ((line = reader.readLine()) != null) {
+          lineSplit = line.split(",");
+
+          for(int x=0; x<lineSplit.length; ++x) {
+              switch(lineSplit[x]) {
+                  case MapSymbols.START: {
+                      startX = x;
+                      startY = y;
+                  } break;
+
+                  case MapSymbols.NORTH:
+                  case MapSymbols.EAST:
+                  case MapSymbols.SOUTH:
+                  case MapSymbols.WEST: {
+                    arrowTiles.add(new Tile(x,y,lineSplit[x]));
+                  } break;
+
+                  case MapSymbols.END: {
+                      endX = x;
+                      endY = y;
+                  } break;
+              }
+          }
+
+          y+=1;
+      }
+
+      placeArrows = true;
+
+      Log.d(TAG, "READY TO PLACE ARROWS");
+
+      reader.close();
+  }
+
+  protected void onUpdate() {
+      Frame frame = arFragment.getArSceneView().getArFrame();
+      Camera cam = frame.getCamera();
+
+      switch(cam.getTrackingState()) {
+          case TRACKING:
+          {
+              Pose camPose = cam.getDisplayOrientedPose(); // ?
+
+              if (placeArrows) {
+
+                  ArrayList<Tile> mapTiles = null;
+
+                  try {
+                      // Load the map
+                      mapTiles = Map.generate(this, "map.csv");
+                  } catch (IOException e) {
+                      e.printStackTrace();
+                  }
+
+                  if (mapTiles == null) {
+                      Log.e(TAG, "onUpdate: Could not load map");
+                  }
+
+                  for (Tile t : mapTiles) {
+
+                      if (t.symbol.equals(MapSymbols.END)) {
+                          // TODO: End tile, do something
+                      }
+                      else {
+                          // Place Arrow
+                          placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                      }
+                  }
+
+                  placeArrows = false;
+              }
+          }
+      }
+  }
+
+  private void placeArrowNode(int x, int y, Direction direction) {
+      AnchorNode anchorNode = new AnchorNode();
+      anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+      // TODO: Determine actual floor level (set to 1.5m for testing purposes)
+      final float floorLevel = -1.5f;
+
+      // Set position relative to camera for now (0,0,0) is the center point of the camera
+      anchorNode.setWorldPosition(new Vector3(x, floorLevel, y));
+
+      // Create arrow node
+      Node arrow = new ArrowNode(direction);
+
+      // Add renderable (arrow model)
+      arrow.setRenderable(arrowRenderable);
+
+      // Add arrow to the anchor to keep it in place
+      arrow.setParent(anchorNode);
   }
 
   /**
