@@ -25,7 +25,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.widget.Button;
 import android.widget.Toast;
+
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
@@ -34,6 +38,10 @@ import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
+
+import java.io.File;
+
+import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -44,21 +52,27 @@ public class MainActivity extends AppCompatActivity {
 
   private ArFragment arFragment;
   private ModelRenderable andyRenderable;
+  private Button pythonButton;
+  private Python py;
 
   @Override
   @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
   // CompletableFuture requires api level 24
   // FutureReturnValueIgnored is not valid
   protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+      super.onCreate(savedInstanceState);
 
-    if (!checkIsSupportedDeviceOrFinish(this)) {
-      return;
-    }
+          if (!checkIsSupportedDeviceOrFinish(this)) {
+              return;
+          }
+
+          if (! Python.isStarted()) {
+              Python.start(new AndroidPlatform(this));
+              py = Python.getInstance();
+          }
 
     setContentView(R.layout.activity_ux);
     arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
-
     // When you build a Renderable, Sceneform loads its resources in the background while returning
     // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
     ModelRenderable.builder()
@@ -91,6 +105,17 @@ public class MainActivity extends AppCompatActivity {
           andy.setRenderable(andyRenderable);
           andy.select();
         });
+    pythonButton = findViewById(R.id.btn_python_test);
+    pythonButton.setOnClickListener(view -> {
+        //TODO roep de python activity aan
+        File testDirectory = FileUtil.getStorageDir("test", this);
+        py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
+        String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
+        Log.d("EA", "---------------------------------------");
+        Log.d("EA", "Python test");
+        Log.d("EA", result);
+        Log.d("EA", "---------------------------------------");
+    });
   }
 
   /**

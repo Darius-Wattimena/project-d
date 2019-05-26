@@ -17,11 +17,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="nl.hr.projectd.escapeassistant.MainActivity">
 
-  <fragment android:name="com.google.ar.sceneform.ux.ArFragment"
-      android:id="@+id/ux_fragment"
+  <android.support.constraint.ConstraintLayout
       android:layout_width="match_parent"
-      android:layout_height="match_parent" />
+      android:layout_height="match_parent">
+
+      <fragment
+          android:id="@+id/ux_fragment"
+          android:name="com.google.ar.sceneform.ux.ArFragment"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
+
+      <Button
+          android:id="@+id/btn_python_test"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_margin="8dp"
+          android:text="Python test"
+          app:layout_constraintVertical_chainStyle="packed"
+          app:layout_constraintLeft_toLeftOf="parent"
+          app:layout_constraintRight_toRightOf="parent"
+          app:layout_constraintBottom_toBottomOf="parent" />
+  </android.support.constraint.ConstraintLayout>
 
 </FrameLayout>
