@@ -40,7 +40,7 @@ public enum Direction {
 
     public abstract int getDegrees();
 
-    public static Direction fromMapSymbol(String symbol) {
+    public static Direction fromMapSymbol(byte symbol) {
         switch (symbol) {
             case MapSymbols.NORTH: return Direction.NORTH;
             case MapSymbols.EAST: return Direction.EAST;

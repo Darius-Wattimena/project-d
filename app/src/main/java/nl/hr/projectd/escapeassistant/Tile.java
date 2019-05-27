@@ -2,7 +2,7 @@ package nl.hr.projectd.escapeassistant;
 
 public class Tile {
 
-    public Tile(int x, int y, String symbol) {
+    public Tile(int x, int y, byte symbol) {
         this.x = x;
         this.y = y;
         this.symbol = symbol;
@@ -10,5 +10,5 @@ public class Tile {
 
     public int x;
     public int y;
-    public String symbol = MapSymbols.NONE;
+    public byte symbol;
 }

@@ -18,23 +18,17 @@ package nl.hr.projectd.escapeassistant;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.os.Build;
-import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
-import com.google.ar.core.Anchor;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
-import com.google.ar.core.HitResult;
-import com.google.ar.core.Plane;
 import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
@@ -42,12 +36,9 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
 
 import java.io.File;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import nl.hr.projectd.escapeassistant.Utils.FileUtil;
@@ -56,171 +47,102 @@ import nl.hr.projectd.escapeassistant.Utils.FileUtil;
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
  */
 public class MainActivity extends AppCompatActivity {
-  private static final String TAG = MainActivity.class.getSimpleName();
-  private static final double MIN_OPENGL_VERSION = 3.0;
-
-  private int temp_nodes_to_place = 0; // ALLEEN OM PIJLEN TE TESTEN
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final double MIN_OPENGL_VERSION = 3.0;
 
     private Boolean placeArrows = true;
-    private Boolean placedArrows = false;
-    private int startX = 0, startY = 0;
 
-  private ArrayList<Tile> arrowTiles = new ArrayList<>();
+    private ArFragment arFragment;
+    private ModelRenderable arrowRenderable;
+    private Button pythonButton;
+    private Python py;
 
-  private ArFragment arFragment;
-  private ModelRenderable andyRenderable, arrowRenderable;
-  private Button pythonButton;
-  private Python py;
+    @Override
+    // CompletableFuture requires api level 24
+    // FutureReturnValueIgnored is not valid
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-  @Override
-  @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
-  // CompletableFuture requires api level 24
-  // FutureReturnValueIgnored is not valid
-  protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
+        if (!checkIsSupportedDeviceOrFinish(this)) {
+            return;
+        }
 
-      if (!checkIsSupportedDeviceOrFinish(this)) {
-          return;
-      }
+        if (! Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+            py = Python.getInstance();
+        }
 
-      if (! Python.isStarted()) {
-          Python.start(new AndroidPlatform(this));
-          py = Python.getInstance();
-      }
+        setContentView(R.layout.activity_ux);
+        arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
 
-      setContentView(R.layout.activity_ux);
-      arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
-      // When you build a Renderable, Sceneform loads its resources in the background while returning
-      // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-      ModelRenderable.builder()
-              .setSource(this, R.raw.andy)
-              .build()
-              .thenAccept(renderable -> andyRenderable = renderable)
-              .exceptionally(
-                      throwable -> {
-                          Toast toast =
-                                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
-                          toast.setGravity(Gravity.CENTER, 0, 0);
-                          toast.show();
-                          return null;
-                      });
-      // Load arrow model
-      ModelRenderable.builder()
-              .setSource(this, R.raw.arrow)
-              .build()
-              .thenAccept(renderable -> arrowRenderable = renderable)
-              .exceptionally(
-                      throwable -> {
-                          Toast toast =
-                                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
-                          toast.setGravity(Gravity.CENTER, 0, 0);
-                          toast.show();
-                          return null;
-                      });
-      pythonButton = findViewById(R.id.btn_python_test);
-      pythonButton.setOnClickListener(view -> {
-          //TODO roep de python activity aan
-          File testDirectory = FileUtil.getStorageDir("test", this);
-          py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
-          //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
-          Log.d(TAG, "---------------------------------------");
-          Log.d(TAG, "Python test");
-          //Log.d(TAG, result);
-          Log.d(TAG, "---------------------------------------");
-    });
+        // Load arrow model
+        ModelRenderable.builder()
+                .setSource(this, R.raw.arrow)
+                .build()
+                .thenAccept(renderable -> arrowRenderable = renderable)
+                .exceptionally(
+                        throwable -> {
+                            Toast toast =
+                                    Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                            return null;
+                        });
+        pythonButton = findViewById(R.id.btn_python_test);
+        pythonButton.setOnClickListener(view -> {
+            //TODO roep de python activity aan
+            File testDirectory = FileUtil.getStorageDir("test", this);
+            py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
+            //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
+            Log.d(TAG, "---------------------------------------");
+            Log.d(TAG, "Python test");
+            //Log.d(TAG, result);
+            Log.d(TAG, "---------------------------------------");
+        });
 
-    arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
-        arFragment.onUpdate(frameTime);
-        onUpdate();
-    });
-  }
+        arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
+            arFragment.onUpdate(frameTime);
+            onUpdate();
+        });
+    }
 
-  public void loadMap() throws IOException {
-      BufferedReader reader = null;
+    protected void onUpdate() {
+        Frame frame = arFragment.getArSceneView().getArFrame();
+        Camera cam = frame.getCamera();
 
-      reader = new BufferedReader(new InputStreamReader(getAssets().open("plattegrond.csv")));
+        switch(cam.getTrackingState()) {
+            case TRACKING:
+                {
+                    Pose camPose = cam.getDisplayOrientedPose(); // ?
 
-      String line;
-      String[] lineSplit;
+                    if (placeArrows) {
 
-      int y = 0;
+                        ArrayList<Tile> mapTiles = null;
 
-      // For the users' start position
-      int endX = 0, endY = 0;
+                        try {
+                            // Load the map
+                            mapTiles = Map.generate(this, "map.csv");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
-      while ((line = reader.readLine()) != null) {
-          lineSplit = line.split(",");
-
-          for(int x=0; x<lineSplit.length; ++x) {
-              switch(lineSplit[x]) {
-                  case MapSymbols.START: {
-                      startX = x;
-                      startY = y;
-                  } break;
-
-                  case MapSymbols.NORTH:
-                  case MapSymbols.EAST:
-                  case MapSymbols.SOUTH:
-                  case MapSymbols.WEST: {
-                    arrowTiles.add(new Tile(x,y,lineSplit[x]));
-                  } break;
-
-                  case MapSymbols.END: {
-                      endX = x;
-                      endY = y;
-                  } break;
-              }
-          }
-
-          y+=1;
-      }
-
-      placeArrows = true;
-
-      Log.d(TAG, "READY TO PLACE ARROWS");
-
-      reader.close();
-  }
-
-  protected void onUpdate() {
-      Frame frame = arFragment.getArSceneView().getArFrame();
-      Camera cam = frame.getCamera();
-
-      switch(cam.getTrackingState()) {
-          case TRACKING:
-          {
-              Pose camPose = cam.getDisplayOrientedPose(); // ?
-
-              if (placeArrows) {
-
-                  ArrayList<Tile> mapTiles = null;
-
-                  try {
-                      // Load the map
-                      mapTiles = Map.generate(this, "map.csv");
-                  } catch (IOException e) {
-                      e.printStackTrace();
-                  }
-
-                  if (mapTiles == null) {
-                      Log.e(TAG, "onUpdate: Could not load map");
-                  } else {
-                      for (Tile t : mapTiles) {
-
-                          if (t.symbol.equals(MapSymbols.END)) {
-                              // TODO: End tile, do something
-                          }
-                          else {
-                              // Place Arrow
-                              placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
-                          }
-                      }
-
-                      placeArrows = false;
-                  }
-              }
-          }
-      }
+                        if (mapTiles == null) {
+                            Log.e(TAG, "onUpdate: Could not load map");
+                        } else {
+                            for (Tile t : mapTiles) {
+                                if (t.symbol == MapSymbols.END) {
+                                    // TODO: End tile, do something
+                                }
+                                else {
+                                    // Place Arrow
+                                    placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                                }
+                            }
+                            placeArrows = false;
+                        }
+                    }
+                }
+        }
   }
 
   private void placeArrowNode(int x, int y, Direction direction) {
@@ -252,10 +174,9 @@ public class MainActivity extends AppCompatActivity {
    * <p>Finishes the activity if Sceneform can not run
    */
   public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
-      String openGlVersionString =
-        ((ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE))
-            .getDeviceConfigurationInfo()
-            .getGlEsVersion();
+      String openGlVersionString = ((ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE))
+              .getDeviceConfigurationInfo()
+              .getGlEsVersion();
       if (Double.parseDouble(openGlVersionString) < MIN_OPENGL_VERSION) {
           Log.e(TAG, "Sceneform requires OpenGL ES 3.0 later");
           Toast.makeText(activity, "Sceneform requires OpenGL ES 3.0 or later", Toast.LENGTH_LONG)
