@@ -79,33 +79,32 @@ public class MainActivity extends AppCompatActivity {
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
 
-          if (!checkIsSupportedDeviceOrFinish(this)) {
-              return;
-          }
+      if (!checkIsSupportedDeviceOrFinish(this)) {
+          return;
+      }
 
-          if (! Python.isStarted()) {
-              Python.start(new AndroidPlatform(this));
-              py = Python.getInstance();
-          }
+      if (! Python.isStarted()) {
+          Python.start(new AndroidPlatform(this));
+          py = Python.getInstance();
+      }
 
-    setContentView(R.layout.activity_ux);
-    arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
-    // When you build a Renderable, Sceneform loads its resources in the background while returning
-    // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-    ModelRenderable.builder()
-        .setSource(this, R.raw.andy)
-        .build()
-        .thenAccept(renderable -> andyRenderable = renderable)
-        .exceptionally(
-            throwable -> {
-              Toast toast =
-                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
-              toast.setGravity(Gravity.CENTER, 0, 0);
-              toast.show();
-              return null;
-            });
-
-     // Load arrow model
+      setContentView(R.layout.activity_ux);
+      arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
+      // When you build a Renderable, Sceneform loads its resources in the background while returning
+      // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
+      ModelRenderable.builder()
+              .setSource(this, R.raw.andy)
+              .build()
+              .thenAccept(renderable -> andyRenderable = renderable)
+              .exceptionally(
+                      throwable -> {
+                          Toast toast =
+                                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+                          toast.setGravity(Gravity.CENTER, 0, 0);
+                          toast.show();
+                          return null;
+                      });
+      // Load arrow model
       ModelRenderable.builder()
               .setSource(this, R.raw.arrow)
               .build()
@@ -118,34 +117,16 @@ public class MainActivity extends AppCompatActivity {
                           toast.show();
                           return null;
                       });
-
-    arFragment.setOnTapArPlaneListener(
-        (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
-          if (andyRenderable == null) {
-            return;
-          }
-
-          // Create the Anchor.
-          Anchor anchor = hitResult.createAnchor();
-          AnchorNode anchorNode = new AnchorNode(anchor);
-          anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-          // Create the transformable andy and add it to the anchor.
-          TransformableNode andy = new TransformableNode(arFragment.getTransformationSystem());
-          andy.setParent(anchorNode);
-          andy.setRenderable(andyRenderable);
-          andy.select();
-        });
-    pythonButton = findViewById(R.id.btn_python_test);
-    pythonButton.setOnClickListener(view -> {
-        //TODO roep de python activity aan
-        File testDirectory = FileUtil.getStorageDir("test", this);
-        py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
-        //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
-        Log.d("EA", "---------------------------------------");
-        Log.d("EA", "Python test");
-        //Log.d("EA", result);
-        Log.d("EA", "---------------------------------------");
+      pythonButton = findViewById(R.id.btn_python_test);
+      pythonButton.setOnClickListener(view -> {
+          //TODO roep de python activity aan
+          File testDirectory = FileUtil.getStorageDir("test", this);
+          py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
+          //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
+          Log.d(TAG, "---------------------------------------");
+          Log.d(TAG, "Python test");
+          //Log.d(TAG, result);
+          Log.d(TAG, "---------------------------------------");
     });
 
     arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
@@ -157,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
   public void loadMap() throws IOException {
       BufferedReader reader = null;
 
-      reader = new BufferedReader(new InputStreamReader(getAssets().open("map.csv")));
+      reader = new BufferedReader(new InputStreamReader(getAssets().open("plattegrond.csv")));
 
       String line;
       String[] lineSplit;
@@ -223,20 +204,20 @@ public class MainActivity extends AppCompatActivity {
 
                   if (mapTiles == null) {
                       Log.e(TAG, "onUpdate: Could not load map");
-                  }
+                  } else {
+                      for (Tile t : mapTiles) {
 
-                  for (Tile t : mapTiles) {
-
-                      if (t.symbol.equals(MapSymbols.END)) {
-                          // TODO: End tile, do something
+                          if (t.symbol.equals(MapSymbols.END)) {
+                              // TODO: End tile, do something
+                          }
+                          else {
+                              // Place Arrow
+                              placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                          }
                       }
-                      else {
-                          // Place Arrow
-                          placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
-                      }
-                  }
 
-                  placeArrows = false;
+                      placeArrows = false;
+                  }
               }
           }
       }
@@ -271,23 +252,17 @@ public class MainActivity extends AppCompatActivity {
    * <p>Finishes the activity if Sceneform can not run
    */
   public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
-    if (Build.VERSION.SDK_INT < VERSION_CODES.N) {
-      Log.e(TAG, "Sceneform requires Android N or later");
-      Toast.makeText(activity, "Sceneform requires Android N or later", Toast.LENGTH_LONG).show();
-      activity.finish();
-      return false;
-    }
-    String openGlVersionString =
+      String openGlVersionString =
         ((ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE))
             .getDeviceConfigurationInfo()
             .getGlEsVersion();
-    if (Double.parseDouble(openGlVersionString) < MIN_OPENGL_VERSION) {
-      Log.e(TAG, "Sceneform requires OpenGL ES 3.0 later");
-      Toast.makeText(activity, "Sceneform requires OpenGL ES 3.0 or later", Toast.LENGTH_LONG)
-          .show();
-      activity.finish();
-      return false;
-    }
-    return true;
+      if (Double.parseDouble(openGlVersionString) < MIN_OPENGL_VERSION) {
+          Log.e(TAG, "Sceneform requires OpenGL ES 3.0 later");
+          Toast.makeText(activity, "Sceneform requires OpenGL ES 3.0 or later", Toast.LENGTH_LONG)
+                  .show();
+          activity.finish();
+          return false;
+      }
+      return true;
   }
 }

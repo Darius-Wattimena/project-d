@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class Map {
 
-    public static final String fileName = "map.csv";
+    public static final String fileName = "plattegrond.csv";
 
     private static Context context;
 
