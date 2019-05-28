@@ -50,12 +50,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final double MIN_OPENGL_VERSION = 3.0;
 
-    private Boolean placeArrows = true;
+    private Boolean placeArrows = false;
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
-    private Button pythonButton;
+    private Button pythonButton, startNavButton;
     private Python py;
+
+    public static final String MAP_FILENAME = "bigmap.bin";
 
     @Override
     // CompletableFuture requires api level 24
@@ -100,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "---------------------------------------");
         });
 
+        startNavButton = findViewById(R.id.btn_start);
+        startNavButton.setOnClickListener(v -> {
+            placeArrows = true;
+        });
+
         arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
             arFragment.onUpdate(frameTime);
             onUpdate();
@@ -121,13 +128,15 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             // Load the map
-                            mapTiles = Map.generate(this, "map.csv");
+                            mapTiles = Map.generate(this, MAP_FILENAME);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
                         if (mapTiles == null) {
-                            Log.e(TAG, "onUpdate: Could not load map");
+                            Log.e(TAG, "onUpdate: Could not load map.");
+                            Toast.makeText(this, "ERROR! Could not find map. ☹", Toast.LENGTH_LONG)
+                                    .show();
                         } else {
                             for (Tile t : mapTiles) {
                                 if (t.symbol == MapSymbols.END) {
@@ -139,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             placeArrows = false;
+                            Toast.makeText(this, "Successfully loaded the map! ☺", Toast.LENGTH_LONG)
+                                    .show();
                         }
                     }
                 }
@@ -150,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
       anchorNode.setParent(arFragment.getArSceneView().getScene());
 
       // TODO: Determine actual floor level (set to 1.5m for testing purposes)
-      final float floorLevel = -1.5f;
+      final float floorLevel = 0x0;
 
       // Set position relative to camera for now (0,0,0) is the center point of the camera
       anchorNode.setWorldPosition(new Vector3(x, floorLevel, y));

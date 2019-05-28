@@ -1,6 +1,7 @@
 package nl.hr.projectd.escapeassistant;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,10 +9,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class Map {
-
-    public static final String fileName = "plattegrond.csv";
-
-    private static Context context;
 
     public static ArrayList<Tile> generate(Context context, String fileName) throws IOException {
 
@@ -24,51 +21,51 @@ public class Map {
         String line;
         String[] lineSplit;
 
-        int y = 0;
+        // Huidige positie in bestand bijhouden
+        int x = 0, y = 0;
 
-        // For the users' start position
+        // Voor de start- en eindpositie
         int startX = 0, startY = 0;
         int endX = 0, endY = 0;
 
-        while ((line = reader.readLine()) != null) {
-            lineSplit = line.split(",");
+        int currentByte;
 
-            for(int x=0; x<lineSplit.length; ++x) {
-                switch(lineSplit[x]) {
-                    // Position will always be set to the last occurrence of a start symbol
-                    case MapSymbols.START: {
-                        startX = x;
-                        startY = y;
-                    } break;
+        while ((currentByte = reader.read()) != -1) {
 
-                    // In the case of arrows (any directional tile) add it to the arrow collection
-                    case MapSymbols.NORTH:
-                    case MapSymbols.EAST:
-                    case MapSymbols.SOUTH:
-                    case MapSymbols.WEST:
-                    case MapSymbols.NORTHEAST:
-                    case MapSymbols.NORTHWEST:
-                    case MapSymbols.SOUTHEAST:
-                    case MapSymbols.SOUTHWEST: {
-                        tiles.add(new Tile(x,y,lineSplit[x]));
-                    } break;
-
-                    // End tile
-                    case MapSymbols.END: {
-                        endX = x;
-                        endY = y;
-                    } break;
-                }
+            if (currentByte == MapSymbols.END_OF_LINE) {
+                y += 1;
+                x = 0;
+                continue;
             }
 
-            // Set the coordinates relative to the players' position
+            // Start positie van de speler
+            if (currentByte == MapSymbols.START) {
+                startX = x;
+                startY = y;
+            }
+
+            // Als we een pijl vinden, voegen we deze toe aan de verzameling van tiles
+            if (currentByte >= MapSymbols.NORTH && currentByte <= MapSymbols.SOUTHWEST) {
+                tiles.add(new Tile(x, y, (byte) currentByte));
+            }
+
+            // Deze tile geeft aan waar het einde is
+            if (currentByte == MapSymbols.END) {
+                endX = x;
+                endY = y;
+            }
+
+            x++; // Volgende kolom
+        }
+            // Stel de coordinaten relatief aan de positie van de speler in
+            // (We gaan er van uit dat de speler naar het noorden kijkt)
             for (Tile arrowTile : tiles) {
                 arrowTile.x = arrowTile.x - startX;
                 arrowTile.y = arrowTile.y - startY;
             }
 
-            y+=1;
-        }
+
+
 
         reader.close();
 
