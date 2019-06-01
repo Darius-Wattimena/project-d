@@ -1,5 +1,6 @@
 package nl.hr.projectd.escapeassistant;
 
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;

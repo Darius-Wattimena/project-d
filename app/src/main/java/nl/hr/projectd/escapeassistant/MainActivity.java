@@ -22,26 +22,24 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.chaquo.python.Python;
-import com.chaquo.python.android.AndroidPlatform;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -54,8 +52,12 @@ public class MainActivity extends AppCompatActivity {
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
-    private Button pythonButton, startNavButton;
+    private Button pythonButton;
     private Python py;
+
+    private Button btn_startNav;
+
+    private ArrayList<Node> nav_arrow_nodes; // Om de geplaatste nodes in memory bij te houden
 
     public static final String MAP_FILENAME = "bigmap.bin";
 
@@ -69,10 +71,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        if (! Python.isStarted()) {
-            Python.start(new AndroidPlatform(this));
-            py = Python.getInstance();
-        }
+//        if (! Python.isStarted()) {
+//            Python.start(new AndroidPlatform(this));
+//            py = Python.getInstance();
+//        }
 
         setContentView(R.layout.activity_ux);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
@@ -90,21 +92,28 @@ public class MainActivity extends AppCompatActivity {
                             toast.show();
                             return null;
                         });
+
+        btn_startNav = findViewById(R.id.btn_start_navigation);
+        // Start navigation click
+        btn_startNav.setOnClickListener(v -> {
+            placeArrows = true;
+            btn_startNav.setVisibility(View.INVISIBLE);
+            Toast.makeText(this, "Starting navigation...", Toast.LENGTH_SHORT)
+                    .show();
+
+        });
+        nav_arrow_nodes = new ArrayList<>();
+
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
-            //TODO roep de python activity aan
+/*            //TODO roep de python activity aan
             File testDirectory = FileUtil.getStorageDir("test", this);
             py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
             //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
             Log.d(TAG, "---------------------------------------");
             Log.d(TAG, "Python test");
             //Log.d(TAG, result);
-            Log.d(TAG, "---------------------------------------");
-        });
-
-        startNavButton = findViewById(R.id.btn_start);
-        startNavButton.setOnClickListener(v -> {
-            placeArrows = true;
+            Log.d(TAG, "---------------------------------------");*/
         });
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
@@ -116,15 +125,34 @@ public class MainActivity extends AppCompatActivity {
     protected void onUpdate() {
         Frame frame = arFragment.getArSceneView().getArFrame();
         Camera cam = frame.getCamera();
+        Pose camPose = cam.getPose();
+
+        int i = 0;
+
+        // Determine which arrows to display
+        for (Node arrow : nav_arrow_nodes) {
+            float dX = camPose.tx() - arrow.getWorldPosition().x;
+            float dY = camPose.ty() - arrow.getWorldPosition().y;
+            float dZ = camPose.tz() - arrow.getWorldPosition().z;
+
+            double distance = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
+
+            arrow.setEnabled(distance < 5 || i == 0);
+            ++i;
+        }
 
         switch(cam.getTrackingState()) {
             case TRACKING:
                 {
-                    Pose camPose = cam.getDisplayOrientedPose(); // ?
-
                     if (placeArrows) {
 
                         ArrayList<Tile> mapTiles = null;
+
+                        // De origin is de virtuele wereld positie van de camera op het moment van inladen
+                        AnchorNode origin = new AnchorNode();
+                        origin.setParent(arFragment.getArSceneView().getScene());
+                        origin.setWorldPosition(new Vector3(camPose.tx(), camPose.ty(), camPose.tz()));
+                        origin.setWorldRotation(new Quaternion(0, camPose.qy(), 0, camPose.qw()));
 
                         try {
                             // Load the map
@@ -138,42 +166,43 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(this, "ERROR! Could not find map. ☹", Toast.LENGTH_LONG)
                                     .show();
                         } else {
+
                             for (Tile t : mapTiles) {
                                 if (t.symbol == MapSymbols.END) {
                                     // TODO: End tile, do something
                                 }
                                 else {
-                                    // Place Arrow
-                                    placeArrowNode(t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                                    // Plaats een pijl voor deze tile
+                                    Node n = placeArrowNode(origin, t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                                    nav_arrow_nodes.add(n);
                                 }
                             }
-                            placeArrows = false;
                             Toast.makeText(this, "Successfully loaded the map! ☺", Toast.LENGTH_LONG)
                                     .show();
                         }
+
+                        placeArrows = false;
                     }
-                }
+                } break;
         }
   }
 
-  private void placeArrowNode(int x, int y, Direction direction) {
-      AnchorNode anchorNode = new AnchorNode();
-      anchorNode.setParent(arFragment.getArSceneView().getScene());
+  private Node placeArrowNode(AnchorNode origin, float xOffset, float yOffset, Direction direction) {
 
-      // TODO: Determine actual floor level (set to 1.5m for testing purposes)
-      final float floorLevel = 0x0;
+      AnchorNode anchor = new AnchorNode();
+      anchor.setParent(origin);
 
-      // Set position relative to camera for now (0,0,0) is the center point of the camera
-      anchorNode.setWorldPosition(new Vector3(x, floorLevel, y));
+      // TODO: Determine actual floor level
+      final float floorLevel = -1;
 
-      // Create arrow node
-      Node arrow = new ArrowNode(direction);
+      // Stel de positie in op de beginpositie (0,0,0) plus de camera veranderingen
+      anchor.setLocalPosition(new Vector3(xOffset, floorLevel, yOffset));
 
-      // Add renderable (arrow model)
-      arrow.setRenderable(arrowRenderable);
+      Node arrow = new ArrowNode(direction); // Maak een Arrow Node aan
+      arrow.setRenderable(arrowRenderable);  // Stel 3D model in
+      arrow.setParent(anchor);               // Stel Node als child van anchor in om in plaats te houden
 
-      // Add arrow to the anchor to keep it in place
-      arrow.setParent(anchorNode);
+      return arrow;
   }
 
   /**
