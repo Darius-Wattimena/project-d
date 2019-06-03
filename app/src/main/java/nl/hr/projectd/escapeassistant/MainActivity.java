@@ -38,8 +38,11 @@ import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -106,14 +109,14 @@ public class MainActivity extends AppCompatActivity {
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
-/*            //TODO roep de python activity aan
+            //TODO roep de python activity aan
             File testDirectory = FileUtil.getStorageDir("test", this);
             py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
             //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
             Log.d(TAG, "---------------------------------------");
             Log.d(TAG, "Python test");
             //Log.d(TAG, result);
-            Log.d(TAG, "---------------------------------------");*/
+            Log.d(TAG, "---------------------------------------");
         });
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
