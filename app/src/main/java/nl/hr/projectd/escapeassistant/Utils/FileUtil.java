@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -36,6 +37,41 @@ public class FileUtil {
             sr = new InputStreamReader(fis, Charset.forName("UTF-8"));
 
             bufferedReader = new BufferedReader(sr);
+            StringBuilder sb = new StringBuilder();
+
+            while((result = bufferedReader.readLine()) != null) {
+                sb.append(result);
+            }
+            result = sb.toString();
+        } catch (IOException e) {
+            result = null;
+        } finally {
+            try {
+                ClosableUtil.close(sr);
+                ClosableUtil.close(fis);
+
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
+            } catch (IOException e) {
+                Log.e("EA", e.getMessage());
+            }
+        }
+
+        return result;
+    }
+
+    public static String readFile(String fileName, File directory) {
+        String result;
+        FileInputStream fis = null;
+        InputStreamReader sr = null;
+        BufferedReader bufferedReader = null;
+
+        try {
+            File file = new File(directory, fileName);
+            //File file = File.createTempFile(fileName, fileSuffix, directory);
+            bufferedReader = new BufferedReader(new FileReader(file));
+
             StringBuilder sb = new StringBuilder();
 
             while((result = bufferedReader.readLine()) != null) {

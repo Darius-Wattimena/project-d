@@ -29,9 +29,13 @@ android {
         ndk {
             abiFilters "armeabi-v7a", "x86"
         }
-        /*python {
-            buildPython "C:\\Users\\dariu\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe" // ALLEEN NODIG TIJDENS HET DEVELOPEN
-        }*/
+        python {
+            //buildPython "C:\\Users\\dariu\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe" // ALLEEN NODIG TIJDENS HET DEVELOPEN
+            pip {
+                install "opencv-python==3.4.2.16"
+                install "numpy==1.14.2"
+            }
+        }
     }
     // Sceneform libraries use language constructs from Java 8.
     // Add these compile options if targeting minSdkVersion < 26.

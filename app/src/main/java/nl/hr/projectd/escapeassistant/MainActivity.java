@@ -1,24 +1,10 @@
-/*
- * Copyright 2018 Google LLC. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package nl.hr.projectd.escapeassistant;
 
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
@@ -27,6 +13,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Pose;
@@ -74,10 +61,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-//        if (! Python.isStarted()) {
-//            Python.start(new AndroidPlatform(this));
-//            py = Python.getInstance();
-//        }
+        if (! Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+            py = Python.getInstance();
+        }
 
         setContentView(R.layout.activity_ux);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
@@ -110,12 +97,13 @@ public class MainActivity extends AppCompatActivity {
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
             //TODO roep de python activity aan
-            File testDirectory = FileUtil.getStorageDir("test", this);
-            py.getModule("pythonTest").callAttr("test", testDirectory.getPath());
-            //String result = FileUtil.readFile(testDirectory.getPath() + "/test.txt", this);
+            File saveDirectory = FileUtil.getStorageDir("test", this);
+            File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            py.getModule("opencv_binary").callAttr("main", saveDirectory.getPath(), pictureDirectory.getPath());
+            String result = FileUtil.readFile("plattegrond.csv", saveDirectory);
             Log.d(TAG, "---------------------------------------");
             Log.d(TAG, "Python test");
-            //Log.d(TAG, result);
+            Log.d(TAG, result);
             Log.d(TAG, "---------------------------------------");
         });
 
