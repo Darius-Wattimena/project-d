@@ -1,17 +1,28 @@
 package nl.hr.projectd.escapeassistant;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+import android.graphics.Bitmap;
+import android.graphics.YuvImage;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.BitmapFactory;
 
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
@@ -26,9 +37,15 @@ import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 
+import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.io.OutputStream;
 
 import nl.hr.projectd.escapeassistant.Services.PythonService;
 import nl.hr.projectd.escapeassistant.Utils.FileUtil;
@@ -51,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Node> nav_arrow_nodes; // Om de geplaatste nodes in memory bij te houden
 
     public static final String MAP_FILENAME = "bigmap.bin";
+
+    public int MY_PERMISSIONS_REQUEST_WRITE_FILE = 1;
+    public boolean permissionGranted = false;
 
     @Override
     // CompletableFuture requires api level 24
@@ -96,6 +116,22 @@ public class MainActivity extends AppCompatActivity {
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
+            if(permissionGranted){
+                takePhoto(view);
+            }
+            else {
+                checkPermission();
+                if(!permissionGranted) {
+                    return;
+                }
+                else{
+            
+                    takePhoto(view);
+                }
+            }
+
+            //TODO: Foto doorsturen naar python activity
+
             Intent i = new Intent(MainActivity.this, PythonService.class);
             MainActivity.this.startService(i);
         });
@@ -210,4 +246,86 @@ public class MainActivity extends AppCompatActivity {
       }
       return true;
   }
+
+    private void takePhoto(final View view) {
+        String date =
+                new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
+        String fileName = "file" + date + ".jpeg";
+
+        try{
+            Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
+            byte[] byteImage = imageToByte(image);
+            image.close();
+
+            File dirpath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+            try {
+                dirpath.mkdirs();
+
+                File outFile = new File(dirpath, fileName);
+                OutputStream os = new FileOutputStream(outFile);
+
+                os.write(byteImage);
+                os.close();
+                Toast.makeText(arFragment.getActivity(), "Picture sucessfully taken", Toast.LENGTH_SHORT)
+                        .show();
+            } catch (Exception e) {
+                Log.e(TAG, "error" + e);
+            }
+        } catch(Exception e) {
+            Log.e(TAG, "error" + e);
+        }
+    }
+    private static byte[] imageToByte(Image image){
+        byte[] byteArray = null;
+        byteArray = NV21toJPEG(YUV420toNV21(image),image.getWidth(),image.getHeight(),100);
+        return byteArray;
+    }
+
+    private static byte[] NV21toJPEG(byte[] nv21, int width, int height, int quality) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        YuvImage yuv = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
+        yuv.compressToJpeg(new Rect(0, 0, width, height), quality, out);
+        return out.toByteArray();
+    }
+
+    private static byte[] YUV420toNV21(Image image) {
+        byte[] nv21;
+        // Get the three planes.
+        ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
+        ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
+        ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
+
+        int ySize = yBuffer.remaining();
+        int uSize = uBuffer.remaining();
+        int vSize = vBuffer.remaining();
+
+        nv21 = new byte[ySize + uSize + vSize];
+
+        //U and V are swapped
+        yBuffer.get(nv21, 0, ySize);
+        vBuffer.get(nv21, ySize, vSize);
+        uBuffer.get(nv21, ySize + vSize, uSize);
+
+        return nv21;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_FILE){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(arFragment.getActivity(), "permission granted", Toast.LENGTH_SHORT).show();
+                permissionGranted = true;
+            }
+        }
+    }
+
+    public void checkPermission(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_REQUEST_WRITE_FILE);
+        }
+    }
 }
