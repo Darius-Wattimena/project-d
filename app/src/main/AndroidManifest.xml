@@ -37,6 +37,8 @@
             ARCore. -->
         <meta-data android:name="com.google.ar.core" android:value="required" />
 
+        <service android:name="nl.hr.projectd.escapeassistant.Services.PythonService"/>
+
         <activity
             android:name="nl.hr.projectd.escapeassistant.MainActivity"
             android:label="@string/app_name"

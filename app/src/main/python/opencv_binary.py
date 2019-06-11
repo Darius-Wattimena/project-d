@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import struct
 
 def main(save_location, picture_location):
     #make image grayscale
@@ -50,3 +51,34 @@ def main(save_location, picture_location):
     np.savetxt(save_location+'/plattegrond.csv',img_array,fmt='%i', delimiter=',')
 
     #cv2.imwrite("Dilation.jpg", dilation)
+
+def binary_save_test(save_location, picture_location):
+    temp_value_array = [1,1,1,1,1,1,1,15,
+                        1,0,0,0,0,0,1,15,
+                        1,0,0,2,0,0,1,15,
+                        1,0,0,6,0,0,1,15,
+                        1,0,6,7,0,0,1,15,
+                        1,0,6,0,0,0,1,15,
+                        1,0,6,0,1,1,1,15,
+                        1,0,6,0,0,0,1,15,
+                        1,0,5,5,3,0,1,15,
+                        1,0,0,0,0,0,1,15,
+                        1,0,0,0,0,0,1,15,
+                        1,1,1,1,1,1,1,15]
+
+    with open(save_location+'/out.bin', 'wb') as f:
+        for b in temp_value_array:
+            f.write(struct.pack('i', b))
+
+def convert_result(value_array):
+    binary_possibilities = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    for possibility in binary_possibilities:
+        value_array = convert_value(possibility, value_array)
+    return value_array
+
+def convert_value(value, value_array):
+    value_array = [x if x != value else get_binary(value) for x in value_array]
+    return value_array
+
+def get_binary(number):
+    return ('00000000'+bin(number)[2:])[-8:]

@@ -3,6 +3,7 @@ package nl.hr.projectd.escapeassistant;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import nl.hr.projectd.escapeassistant.Services.PythonService;
 import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 
 /**
@@ -43,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
     private Button pythonButton;
-    private Python py;
 
     private Button btn_startNav;
 
@@ -63,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (! Python.isStarted()) {
             Python.start(new AndroidPlatform(this));
-            py = Python.getInstance();
         }
 
         setContentView(R.layout.activity_ux);
@@ -96,15 +96,8 @@ public class MainActivity extends AppCompatActivity {
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
-            //TODO roep de python activity aan
-            File saveDirectory = FileUtil.getStorageDir("test", this);
-            File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-            py.getModule("opencv_binary").callAttr("main", saveDirectory.getPath(), pictureDirectory.getPath());
-            String result = FileUtil.readFile("plattegrond.csv", saveDirectory);
-            Log.d(TAG, "---------------------------------------");
-            Log.d(TAG, "Python test");
-            Log.d(TAG, result);
-            Log.d(TAG, "---------------------------------------");
+            Intent i = new Intent(MainActivity.this, PythonService.class);
+            MainActivity.this.startService(i);
         });
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
