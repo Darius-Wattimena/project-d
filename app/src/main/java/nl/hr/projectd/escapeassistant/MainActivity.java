@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Node> nav_arrow_nodes; // Om de geplaatste nodes in memory bij te houden
 
-    public static final String MAP_FILENAME = "bigmap.bin";
+    public static final String MAP_FILENAME = "output.bin";
 
     public int MY_PERMISSIONS_REQUEST_WRITE_FILE = 1;
     public boolean permissionGranted = false;
@@ -121,11 +121,7 @@ public class MainActivity extends AppCompatActivity {
             }
             else {
                 checkPermission();
-                if(!permissionGranted) {
-                    return;
-                }
-                else{
-            
+                if(permissionGranted) {
                     takePhoto(view);
                 }
             }
@@ -176,7 +172,8 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             // Load the map
-                            mapTiles = Map.generate(this, MAP_FILENAME);
+                            File saveDirectory = FileUtil.getStorageDir("test", this);
+                            mapTiles = Map.generate(this, new File(saveDirectory, MAP_FILENAME));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

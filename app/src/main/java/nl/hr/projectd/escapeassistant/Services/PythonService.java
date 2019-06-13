@@ -31,7 +31,7 @@ public class PythonService extends IntentService {
                 .callAttr("binary_save_test", //TODO replace the key with the correct method
                         saveDirectory.getPath(),
                         pictureDirectory.getPath());
-        String result = FileUtil.readFile("out.bin", saveDirectory);
+        String result = FileUtil.readFile("output.bin", saveDirectory);
         Log.d(TAG, "---------------------------------------");
         Log.d(TAG, "Python test");
         Log.d(TAG, result);
