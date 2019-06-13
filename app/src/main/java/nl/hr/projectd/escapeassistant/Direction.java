@@ -1,5 +1,7 @@
 package nl.hr.projectd.escapeassistant;
 
+import static nl.hr.projectd.escapeassistant.ArrowSymbol.*;
+
 public enum Direction {
 
     // Cardinal
@@ -40,16 +42,16 @@ public enum Direction {
 
     public abstract int getDegrees();
 
-    public static Direction fromMapSymbol(byte symbol) {
+    public static Direction fromArrowSymbol(byte symbol) {
         switch (symbol) {
-            case MapSymbols.NORTH: return Direction.NORTH;
-            case MapSymbols.EAST: return Direction.EAST;
-            case MapSymbols.SOUTH: return Direction.SOUTH;
-            case MapSymbols.WEST: return Direction.WEST;
-            case MapSymbols.NORTHEAST: return Direction.NORTHEAST;
-            case MapSymbols.NORTHWEST: return Direction.NORTHWEST;
-            case MapSymbols.SOUTHEAST: return Direction.SOUTHEAST;
-            case MapSymbols.SOUTHWEST: return Direction.SOUTHWEST;
+            case ArrowSymbol.NORTH: return Direction.NORTH;
+            case ArrowSymbol.EAST: return Direction.EAST;
+            case ArrowSymbol.SOUTH: return Direction.SOUTH;
+            case ArrowSymbol.WEST: return Direction.WEST;
+            case ArrowSymbol.NORTHEAST: return Direction.NORTHEAST;
+            case ArrowSymbol.NORTHWEST: return Direction.NORTHWEST;
+            case ArrowSymbol.SOUTHEAST: return Direction.SOUTHEAST;
+            case ArrowSymbol.SOUTHWEST: return Direction.SOUTHWEST;
             default: return Direction.NORTH;
         }
     }
