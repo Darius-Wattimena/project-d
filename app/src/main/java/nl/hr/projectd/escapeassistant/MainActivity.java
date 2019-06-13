@@ -132,17 +132,16 @@ public class MainActivity extends AppCompatActivity {
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
-            if(permissionGranted){
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_FILE);
+            } else {
                 takePhoto(view);
-            }
-            else {
-                checkPermission();
-                if(permissionGranted) {
-                    takePhoto(view);
-                }
-            }
 
-            //TODO: Foto doorsturen naar python activity
+                //TODO: Foto doorsturen naar python activity
+            }
 
             Intent i = new Intent(MainActivity.this, PythonService.class);
             MainActivity.this.startService(i);
@@ -364,15 +363,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(arFragment.getActivity(), "permission granted", Toast.LENGTH_SHORT).show();
                 permissionGranted = true;
             }
-        }
-    }
-
-    public void checkPermission(){
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS_REQUEST_WRITE_FILE);
         }
     }
 }
