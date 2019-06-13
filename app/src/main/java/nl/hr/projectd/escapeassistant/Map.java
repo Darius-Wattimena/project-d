@@ -12,14 +12,18 @@ import java.util.ArrayList;
 
 public class Map {
 
-    public static ArrayList<Tile> generate(Context context, String fileName) throws IOException {
+    public static ArrayList<Tile> generate(Context context, File file) throws IOException {
 
         ArrayList<Tile> arrowTiles = new ArrayList<>();
         ArrayList<ArrayList<Byte>> map = new ArrayList<>();
 
         FileReader reader = null;
 
+<<<<<<< HEAD
         reader = new FileReader(fileName);
+=======
+        reader = new BufferedReader(new FileReader(file));
+>>>>>>> eb438b8dd565cfea95781b0f3e589bd013b490ee
 
         String line;
         String[] lineSplit;
