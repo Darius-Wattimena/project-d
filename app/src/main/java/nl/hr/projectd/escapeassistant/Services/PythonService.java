@@ -2,6 +2,7 @@ package nl.hr.projectd.escapeassistant.Services;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -24,9 +25,11 @@ public class PythonService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         py = Python.getInstance();
+        Bundle bundle = intent.getExtras();
+        String fileName = bundle.getString("fileName", "test");
         File saveDirectory = FileUtil.getStorageDir("test", this);
         File sdCard = Environment.getExternalStorageDirectory();
-        File pictureDirectory = new File (sdCard.getAbsolutePath() + "/Pictures");
+        File pictureDirectory = new File (sdCard.getAbsolutePath() + "/Pictures/" + fileName);
         py.getModule("opencv_binary")
                 .callAttr("binary_save_test", //TODO replace the key with the correct method
                         saveDirectory.getPath(),

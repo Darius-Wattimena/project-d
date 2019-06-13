@@ -58,6 +58,7 @@ import nl.hr.projectd.escapeassistant.Utils.FileUtil;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final double MIN_OPENGL_VERSION = 3.0;
+    private String fileName;
 
     private Boolean placeArrows = false;
 
@@ -144,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Intent i = new Intent(MainActivity.this, PythonService.class);
+            i.putExtra("fileName", fileName);
             MainActivity.this.startService(i);
         });
 
@@ -296,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
     private void takePhoto(final View view) {
         String date =
                 new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
-        String fileName = "file" + date + ".jpeg";
+        fileName = "file" + date + ".jpeg";
 
         try{
             Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
