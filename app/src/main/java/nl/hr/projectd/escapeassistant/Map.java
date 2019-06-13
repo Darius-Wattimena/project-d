@@ -4,19 +4,21 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class Map {
 
-    public static ArrayList<Tile> generate(Context context, String fileName) throws IOException {
+    public static ArrayList<Tile> generate(Context context, File file) throws IOException {
 
         ArrayList<Tile> tiles = new ArrayList<>();
 
         BufferedReader reader = null;
 
-        reader = new BufferedReader(new InputStreamReader(context.getAssets().open(fileName)));
+        reader = new BufferedReader(new FileReader(file));
 
         String line;
         String[] lineSplit;
