@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                             // Load the map
 
                             File saveDirectory = FileUtil.getStorageDir("test", this);
-                            File f = new File(saveDirectory, "out.bin");
+                            File f = new File(saveDirectory, "output.bin");
 
                             mapTiles = Map.generate(this, f);
                         } catch (IOException e) {
