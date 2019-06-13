@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -18,11 +17,9 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-import android.graphics.Bitmap;
 import android.graphics.YuvImage;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.graphics.BitmapFactory;
 
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
@@ -67,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Node> nav_arrow_nodes; // Om de geplaatste nodes in memory bij te houden
 
-    public static final String MAP_FILENAME = "bigmap.bin";
+    public static final String MAP_FILENAME = "output.bin";
 
     public int MY_PERMISSIONS_REQUEST_WRITE_FILE = 1;
     public boolean permissionGranted = false;
@@ -121,11 +118,7 @@ public class MainActivity extends AppCompatActivity {
             }
             else {
                 checkPermission();
-                if(!permissionGranted) {
-                    return;
-                }
-                else{
-            
+                if(permissionGranted) {
                     takePhoto(view);
                 }
             }
@@ -176,7 +169,10 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             // Load the map
-                            mapTiles = Map.generate(this, MAP_FILENAME);
+
+                            File saveDirectory = FileUtil.getStorageDir("test", this);
+
+                            mapTiles = Map.generate(this, saveDirectory.getAbsolutePath() + "out.bin");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -193,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 else {
                                     // Plaats een pijl voor deze tile
-                                    Node n = placeArrowNode(origin, t.x, t.y, Direction.fromMapSymbol(t.symbol));
+                                    Node n = placeArrowNode(origin, t.x, t.y, Direction.fromArrowSymbol(t.symbol));
                                     nav_arrow_nodes.add(n);
                                 }
                             }

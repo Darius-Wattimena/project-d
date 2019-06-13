@@ -66,19 +66,6 @@ def binary_save_test(save_location, picture_location):
                         1,0,0,0,0,0,1,15,
                         1,1,1,1,1,1,1,15]
 
-    with open(save_location+'/out.bin', 'wb') as f:
+    with open(save_location+'/output.bin', 'wb') as f:
         for b in temp_value_array:
-            f.write(struct.pack('i', b))
-
-def convert_result(value_array):
-    binary_possibilities = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-    for possibility in binary_possibilities:
-        value_array = convert_value(possibility, value_array)
-    return value_array
-
-def convert_value(value, value_array):
-    value_array = [x if x != value else get_binary(value) for x in value_array]
-    return value_array
-
-def get_binary(number):
-    return ('00000000'+bin(number)[2:])[-8:]
+            f.write(struct.pack('b', b))
