@@ -111,6 +111,23 @@ public class Map {
             return new Tile(x+1, y, ArrowSymbol.EAST);
         }
 
+        if (xmfree) {
+            if (byteMaps.get(y).get(x-1) == MapSymbols.ROUTE) {
+                return new Tile(x-1, y, ArrowSymbol.WEST);
+            }
+            else if (ymfree && byteMaps.get(y-1).get(x-1) == MapSymbols.ROUTE) {
+                return new Tile(x-1, y-1, ArrowSymbol.NORTHWEST);
+            }
+        }
+        else if (xpfree) {
+            if (byteMaps.get(y).get(x+1) == MapSymbols.ROUTE) {
+                return new Tile(x+1, y, ArrowSymbol.EAST);
+            }
+            else if (ymfree && byteMaps.get(y-1).get(x+1) == MapSymbols.ROUTE) {
+                return new Tile(x+1, y-1, ArrowSymbol.NORTHEAST);
+            }
+        }
+
         return null;
     }
 
