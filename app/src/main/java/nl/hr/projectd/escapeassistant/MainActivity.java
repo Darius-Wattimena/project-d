@@ -30,7 +30,11 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.Color;
+import com.google.ar.sceneform.rendering.Material;
+import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.samples.escapeassistant.R;
 import com.google.ar.sceneform.ux.ArFragment;
 
@@ -43,6 +47,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.io.OutputStream;
+import java.util.concurrent.CompletableFuture;
 
 import nl.hr.projectd.escapeassistant.Services.PythonService;
 import nl.hr.projectd.escapeassistant.Utils.FileUtil;
@@ -57,12 +62,12 @@ public class MainActivity extends AppCompatActivity {
     private Boolean placeArrows = false;
 
     private ArFragment arFragment;
-    private ModelRenderable arrowRenderable;
+    private ModelRenderable arrowRenderable, starRenderable;
     private Button pythonButton;
 
     private Button btn_startNav;
 
-    private ArrayList<Node> nav_arrow_nodes; // Om de geplaatste nodes in memory bij te houden
+    private ArrayList<Node> navigation_nodes; // Om de geplaatste nodes in memory bij te houden
 
     public static final String MAP_FILENAME = "output.bin";
 
@@ -94,7 +99,21 @@ public class MainActivity extends AppCompatActivity {
                 .exceptionally(
                         throwable -> {
                             Toast toast =
-                                    Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+                                    Toast.makeText(this, "Unable to load arrow renderable", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                            return null;
+                        });
+
+        // Load star model
+        ModelRenderable.builder()
+                .setSource(this, R.raw.star)
+                .build()
+                .thenAccept(renderable -> starRenderable = renderable)
+                .exceptionally(
+                        throwable -> {
+                            Toast toast =
+                                    Toast.makeText(this, "Unable to load star renderable", Toast.LENGTH_LONG);
                             toast.setGravity(Gravity.CENTER, 0, 0);
                             toast.show();
                             return null;
@@ -109,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
                     .show();
 
         });
-        nav_arrow_nodes = new ArrayList<>();
+        navigation_nodes = new ArrayList<>();
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
@@ -143,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         int i = 0;
 
         // Determine which arrows to display
-        for (Node arrow : nav_arrow_nodes) {
+        for (Node arrow : navigation_nodes) {
             float dX = camPose.tx() - arrow.getWorldPosition().x;
             float dY = camPose.ty() - arrow.getWorldPosition().y;
             float dZ = camPose.tz() - arrow.getWorldPosition().z;
@@ -169,7 +188,6 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             // Load the map
-
                             File saveDirectory = FileUtil.getStorageDir("test", this);
                             File f = new File(saveDirectory, "output.bin");
 
@@ -186,12 +204,44 @@ public class MainActivity extends AppCompatActivity {
 
                             for (Tile t : mapTiles) {
                                 if (t.symbol == MapSymbols.END) {
-                                    // TODO: End tile, do something
+                                    // END TILE
+                                    AnchorNode an = new AnchorNode();
+                                    an.setLocalPosition(new Vector3(t.x, -2, t.y));
+                                    an.setParent(origin);
+                                    an.setRenderable(starRenderable);
+
+                                    CompletableFuture<Material> materialCompletableFuture =
+                                            MaterialFactory.makeOpaqueWithColor(this, new Color(255, 0, 0));
+
+                                    materialCompletableFuture.thenAccept(material -> {
+                                        Renderable r2 = an.getRenderable().makeCopy();
+                                        r2.setMaterial(material);
+                                        an.setRenderable(r2);
+                                    });
                                 }
                                 else {
-                                    // Plaats een pijl voor deze tile
-                                    Node n = placeArrowNode(origin, t.x, t.y, Direction.fromArrowSymbol(t.symbol));
-                                    nav_arrow_nodes.add(n);
+                                    // Als dit een pijl is
+                                    if (t.symbol >= ArrowSymbol.NORTH && t.symbol <= ArrowSymbol.SOUTHWEST) {
+                                        // Plaats een pijl voor deze tile
+                                        Node n = placeArrowNode(origin, t.x, t.y, Direction.fromArrowSymbol(t.symbol));
+                                        navigation_nodes.add(n);
+                                    }
+                                    else if (t.symbol == MapSymbols.START) {
+                                        AnchorNode an = new AnchorNode();
+                                        an.setLocalPosition(new Vector3(t.x, -2, t.y));
+                                        an.setParent(origin);
+                                        an.setRenderable(starRenderable);
+
+                                        CompletableFuture<Material> materialCompletableFuture =
+                                                MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 255));
+
+                                        materialCompletableFuture.thenAccept(material -> {
+                                            Renderable r2 = an.getRenderable().makeCopy();
+                                            r2.setMaterial(material);
+                                            an.setRenderable(r2);
+                                        });
+                                    }
+
                                 }
                             }
                             Toast.makeText(this, "Successfully loaded the map! ☺", Toast.LENGTH_LONG)

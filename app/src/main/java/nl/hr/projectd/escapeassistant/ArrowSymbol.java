@@ -3,12 +3,12 @@ package nl.hr.projectd.escapeassistant;
 public class ArrowSymbol {
 
     public static final byte
-        NORTH = 0,
-        EAST  = 1,
-        SOUTH = 2,
-        WEST  = 3,
-        NORTHEAST = 4,
-        NORTHWEST = 5,
-        SOUTHEAST = 6,
-        SOUTHWEST = 7;
+        NORTH     = 10,
+        EAST      = 11,
+        SOUTH     = 12,
+        WEST      = 13,
+        NORTHEAST = 14,
+        NORTHWEST = 15,
+        SOUTHEAST = 16,
+        SOUTHWEST = 17;
 }
