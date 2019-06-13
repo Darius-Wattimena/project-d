@@ -17,7 +17,7 @@ public class Map {
         ArrayList<Tile> arrowTiles = new ArrayList<>();
         ArrayList<ArrayList<Byte>> map = new ArrayList<>();
 
-        FileReader reader = null;
+        BufferedReader reader = null;
 
         reader = new BufferedReader(new FileReader(file));
 
