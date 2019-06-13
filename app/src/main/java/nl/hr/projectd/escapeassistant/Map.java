@@ -19,11 +19,7 @@ public class Map {
 
         FileReader reader = null;
 
-<<<<<<< HEAD
         reader = new FileReader(fileName);
-=======
-        reader = new BufferedReader(new FileReader(file));
->>>>>>> eb438b8dd565cfea95781b0f3e589bd013b490ee
 
         String line;
         String[] lineSplit;

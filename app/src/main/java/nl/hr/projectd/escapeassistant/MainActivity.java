@@ -169,15 +169,10 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             // Load the map
-<<<<<<< HEAD
 
                             File saveDirectory = FileUtil.getStorageDir("test", this);
 
                             mapTiles = Map.generate(this, saveDirectory.getAbsolutePath() + "out.bin");
-=======
-                            File saveDirectory = FileUtil.getStorageDir("test", this);
-                            mapTiles = Map.generate(this, new File(saveDirectory, MAP_FILENAME));
->>>>>>> eb438b8dd565cfea95781b0f3e589bd013b490ee
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
