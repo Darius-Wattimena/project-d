@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Map {
@@ -16,6 +17,7 @@ public class Map {
 
         ArrayList<Tile> arrowTiles = new ArrayList<>();
         ArrayList<ArrayList<Byte>> map = new ArrayList<>();
+        map.add(new ArrayList<Byte>()); // For the first row
 
         BufferedReader reader = null;
 
@@ -65,14 +67,12 @@ public class Map {
 
         reader.close();
 
-        byte[][] byteMap = listTo2DArray(map);
-
         int xx = startX;
         int yy = startY;
 
         // Iterate through map find map
         while(true) {
-            Tile nextTile = getNextTile(byteMap, xx, yy);
+            Tile nextTile = getNextTile(map, xx, yy);
 
             if (nextTile != null) {
                 arrowTiles.add(nextTile);
@@ -96,44 +96,22 @@ public class Map {
         return arrowTiles;
     }
 
-    public static Tile getNextTile(byte[][] byteMaps, int x, int y) {
+    public static Tile getNextTile(ArrayList<ArrayList<Byte>> byteMaps, int x, int y) {
 
         // Check if index is within range
         boolean xmfree = x - 1 > 0,
-                xpfree = x + 1 < byteMaps[0].length,
+                xpfree = x + 1 < byteMaps.get(0).size(),
                 ymfree = y - 1 > 0,
-                ypfree = y + 1 < byteMaps.length;
+                ypfree = y + 1 < byteMaps.size();
 
-        if (xmfree && byteMaps[x-1][y] == MapSymbols.ROUTE) {
+        if (xmfree && byteMaps.get(y).get(x-1) == MapSymbols.ROUTE) {
             return new Tile(x-1, y, ArrowSymbol.WEST);
         }
-        else if (xpfree && byteMaps[x+1][y] == MapSymbols.ROUTE) {
+        else if (xpfree && byteMaps.get(y).get(x+1) == MapSymbols.ROUTE) {
             return new Tile(x+1, y, ArrowSymbol.EAST);
-        }
-        else if (ypfree && byteMaps[x][y+1] == MapSymbols.ROUTE) {
-            return new Tile(x, y+1, ArrowSymbol.SOUTH);
-        }
-        else if (ymfree && byteMaps[x][y-1] == MapSymbols.ROUTE) {
-            return new Tile(x, y-1, ArrowSymbol.NORTH);
-        }
-        else if (xpfree && ymfree && byteMaps[x][y-1] == MapSymbols.ROUTE) {
-            return new Tile(x+1, y-1, ArrowSymbol.NORTH);
         }
 
         return null;
-    }
-
-    public static byte[][] listTo2DArray(ArrayList<ArrayList<Byte>> byteList) {
-
-        byte[][] arr = new byte[byteList.size()][byteList.get(0).size()];
-
-        for(int i=0; i<byteList.size(); ++i) {
-            for (int j=0; j<byteList.get(0).size(); ++j) {
-                arr[i][j] = byteList.get(i).get(j);
-            }
-        }
-
-        return arr;
     }
 
 }
