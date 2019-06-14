@@ -4,7 +4,7 @@ from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 
-def main():
+def main(save_location, picture_location):
     def read_and_convert_image(path):
         img = cv2.imread(path, 0)
         cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -81,12 +81,26 @@ def main():
         img_array2[endpoint[1]][endpoint[0]] = 3
         return img_array2
 
-    img, cimg = read_and_convert_image('Plattegrond_V5_1.jpg')
+    img, cimg = read_and_convert_image(picture_location)
     startpoint, endpoint = detect_start_and_end(img, cimg)
     img2 = filter_image(cimg)
     dilation = morphological_transform(img2)
     img_array = image_to_array(dilation)
     array_w_path = pathfinder(img_array, startpoint, endpoint)
-    np.savetxt('plattegrond_pf.csv', array_w_path, fmt='%i', delimiter=',')
+
+    arr = []
+
+    for row in array_w_path:
+        for val in row:
+            arr.append(val)
+        arr.append(5)
+        print(len(row))
+        print(row[-1])
+
+    #np.savetxt('plattegrond_pf.csv', array_w_path, fmt='%i', delimiter=',')
+
+    with open(save_location+'/output.bin', 'wb') as f:
+        for b in arr:
+            f.write(struct.pack('b', b))
 
 main()
