@@ -31,16 +31,14 @@ public class PythonService extends IntentService {
         File saveDirectory = FileUtil.getStorageDir("test", this);
         File sdCard = Environment.getExternalStorageDirectory();
         File pictureDirectory = new File (sdCard.getAbsolutePath() + "/Pictures/" + fileName);
-        py.getModule("opencv_binary")
-                .callAttr("binary_save_test", //TODO replace the key with the correct method
+        py.getModule("opencv_pf")
+                .callAttr("main", //TODO replace the key with the correct method
                         saveDirectory.getPath(),
                         pictureDirectory.getPath());
         String result = FileUtil.readFile("output.bin", saveDirectory);
 
         Log.d(TAG, "onHandleIntent: " + saveDirectory.getAbsolutePath());
-
-        Toast.makeText(this, "Pathfinding complete, start navigation!", Toast.LENGTH_LONG)
-                .show();
+        
         Log.d(TAG, "---------------------------------------");
         Log.d(TAG, "Python test");
         Log.d(TAG, result);
