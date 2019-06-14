@@ -53,16 +53,16 @@ def main(save_location, picture_location):
     #cv2.imwrite("Dilation.jpg", dilation)
 
 def binary_save_test(save_location, picture_location):
-    temp_value_array = [1,1,1,1,3,1,1,5,
-                        1,1,1,1,4,1,1,5,
-                        1,1,1,1,4,1,1,5,
-						1,1,1,1,4,1,1,5,
-						1,1,4,4,4,1,1,5,
-						1,4,1,1,1,1,1,5,
-						1,1,4,1,1,1,1,5,
-						1,1,1,4,2,1,1,5,
-						1,1,1,1,1,1,1,5,
-                        1,1,1,1,1,1,1,5]
+    temp_value_array = [1,1,1,1,1,1,1,1,5,
+                        1,1,1,1,1,1,1,1,5,
+                        1,1,1,1,4,4,3,1,5,
+						1,1,1,1,4,1,1,1,5,
+						1,1,1,4,1,1,1,1,5,
+						1,1,4,1,1,1,1,1,5,
+						1,1,4,1,1,1,1,1,5,
+						1,1,4,1,1,1,1,1,5,
+						1,1,4,1,1,1,1,1,5,
+                        1,1,1,2,1,1,1,1,5]
 
     with open(save_location+'/output.bin', 'wb') as f:
         for b in temp_value_array:
