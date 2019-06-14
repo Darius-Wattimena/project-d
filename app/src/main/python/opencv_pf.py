@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import struct
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
@@ -92,8 +93,8 @@ def main(save_location, picture_location):
 
     for row in array_w_path:
         for val in row:
-            arr.append(val)
-        arr.append(5)
+            arr.append(int(val))
+        arr.append(int(5))
         print(len(row))
         print(row[-1])
 
@@ -102,5 +103,3 @@ def main(save_location, picture_location):
     with open(save_location+'/output.bin', 'wb') as f:
         for b in arr:
             f.write(struct.pack('b', b))
-
-main()
