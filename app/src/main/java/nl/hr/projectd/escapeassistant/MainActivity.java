@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private ModelRenderable arrowRenderable, starRenderable;
     private Button pythonButton;
 
-    private Button btn_startNav;
+    private Button btn_startNav, btn_stopNav;
 
     private ArrayList<Node> navigation_nodes; // Om de geplaatste nodes in memory bij te houden
 
@@ -75,10 +75,13 @@ public class MainActivity extends AppCompatActivity {
     public int MY_PERMISSIONS_REQUEST_WRITE_FILE = 1;
     public boolean permissionGranted = false;
 
+    private AnchorNode origin_mem = null;
+
     @Override
     // CompletableFuture requires api level 24
     // FutureReturnValueIgnored is not valid
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
         if (!checkIsSupportedDeviceOrFinish(this)) {
@@ -121,15 +124,23 @@ public class MainActivity extends AppCompatActivity {
                         });
 
         btn_startNav = findViewById(R.id.btn_start_navigation);
+        btn_stopNav = findViewById(R.id.btn_stop_navigation);
         // Start navigation click
         btn_startNav.setOnClickListener(v -> {
             placeArrows = true;
             btn_startNav.setVisibility(View.INVISIBLE);
+            pythonButton.setVisibility(View.INVISIBLE);
             Toast.makeText(this, "Starting navigation...", Toast.LENGTH_SHORT)
                     .show();
-
+            btn_stopNav.setVisibility(View.VISIBLE);
         });
-        navigation_nodes = new ArrayList<>();
+        btn_stopNav.setOnClickListener(v -> {
+            placeArrows = false;
+            pythonButton.setVisibility(View.VISIBLE);
+            btn_startNav.setVisibility(View.INVISIBLE);
+            btn_stopNav.setVisibility(View.INVISIBLE);
+            arFragment.getArSceneView().getScene().removeChild(origin_mem);
+        });
 
         pythonButton = findViewById(R.id.btn_python_test);
         pythonButton.setOnClickListener(view -> {
@@ -140,6 +151,8 @@ public class MainActivity extends AppCompatActivity {
                         MY_PERMISSIONS_REQUEST_WRITE_FILE);
             } else {
                 takePhoto(view);
+                btn_startNav.setVisibility(View.VISIBLE);
+                pythonButton.setVisibility(View.INVISIBLE);
 
                 //TODO: Foto doorsturen naar python activity
             }
@@ -160,29 +173,17 @@ public class MainActivity extends AppCompatActivity {
         Camera cam = frame.getCamera();
         Pose camPose = cam.getPose();
 
-        int i = 0;
-
-        // Determine which arrows to display
-        for (Node arrow : navigation_nodes) {
-            float dX = camPose.tx() - arrow.getWorldPosition().x;
-            float dY = camPose.ty() - arrow.getWorldPosition().y;
-            float dZ = camPose.tz() - arrow.getWorldPosition().z;
-
-            double distance = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-
-            arrow.setEnabled(distance < 5 || i == 0);
-            ++i;
-        }
-
         switch(cam.getTrackingState()) {
             case TRACKING:
                 {
                     if (placeArrows) {
 
                         ArrayList<Tile> mapTiles = null;
+                        navigation_nodes = new ArrayList<>();
 
-                        // De origin is de virtuele wereld positie van de camera op het moment van inladen
+                        // De origin is de virtuele wereld positie van de camera
                         AnchorNode origin = new AnchorNode();
+                        origin_mem = origin;
                         origin.setParent(arFragment.getArSceneView().getScene());
                         origin.setWorldPosition(new Vector3(camPose.tx(), camPose.ty(), camPose.tz()));
                         origin.setWorldRotation(new Quaternion(0, camPose.qy(), 0, camPose.qw()));

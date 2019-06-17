@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="androidgreen">#a4c639</color>
+    <color name="strawberry">#d9463e</color>
     <color name="white">#FFF</color>
     <color name="black">#000</color>
     <color name="seagreen">#2E8B57</color>

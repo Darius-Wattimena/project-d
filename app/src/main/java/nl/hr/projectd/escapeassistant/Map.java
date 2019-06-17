@@ -116,7 +116,7 @@ public class Map {
         boolean xmfree = x - 1 >= 0,
                 xpfree = x + 1 < byteMaps.get(0).size(),
                 ymfree = y - 1 >= 0,
-                ypfree = y + 1 < byteMaps.size();
+                ypfree = y + 2 < byteMaps.size();
 
         // VERTICAL
         if (ymfree && byteMaps.get(y-1).get(x) == MapSymbols.ROUTE && !checkTraveled(x, y-1, traveledTiles)) {
